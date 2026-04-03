@@ -22,6 +22,8 @@ export function useCamera() {
       setPermissionDenied(false);
       setStatus('starting');
 
+      stopCamera();
+
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('Camera access is not available in this browser.');
       }

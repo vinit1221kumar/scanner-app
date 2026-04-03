@@ -64,7 +64,7 @@ export function PageList({ pages, onRemove, onClear }: PageListProps) {
                   Download
                 </button>
                 <button className="text-button text-button-danger" onClick={() => onRemove(page.id)}>
-                  Retake
+                  Delete
                 </button>
               </div>
             </div>

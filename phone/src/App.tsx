@@ -75,15 +75,15 @@ export default function App() {
     }
   };
 
-  const handleRetake = () => {
+  const handleDeleteLast = () => {
     const lastPage = pages[0];
     if (!lastPage) {
-      setStatusMessage('No captured pages to retake.');
+      setStatusMessage('No captured pages to delete.');
       return;
     }
 
     removePage(lastPage.id);
-    setStatusMessage('Last page removed. Capture it again when ready.');
+    setStatusMessage('Last page deleted. Capture again when ready.');
   };
 
   const handleSend = async () => {
@@ -196,7 +196,7 @@ export default function App() {
 
             <ScanActions
               onCapture={handleCapture}
-              onRetake={handleRetake}
+              onDeleteLast={handleDeleteLast}
               onSend={handleSend}
               captureDisabled={cameraStatus !== 'ready' || permissionDenied}
               retakeDisabled={pages.length === 0}

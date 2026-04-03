@@ -9,12 +9,13 @@ import { StatusBadge } from '@/components/status-badge';
 import { useScannerSocket } from '@/hooks/useScannerSocket';
 
 const statusConfig: Record<
-  'idle' | 'connecting' | 'connected' | 'disconnected' | 'error',
+  'idle' | 'connecting' | 'connected' | 'waiting' | 'disconnected' | 'error',
   { label: string; tone: 'neutral' | 'success' | 'warning' | 'danger' }
 > = {
   idle: { label: 'Idle', tone: 'neutral' },
   connecting: { label: 'Connecting', tone: 'warning' },
   connected: { label: 'Connected', tone: 'success' },
+  waiting: { label: 'Waiting for phone', tone: 'warning' },
   disconnected: { label: 'Disconnected', tone: 'danger' },
   error: { label: 'Connection error', tone: 'danger' },
 };
@@ -60,7 +61,9 @@ export function ScannerApp() {
     };
   }, [phoneUrl]);
 
-  const state = statusConfig[status];
+  const effectiveStatus =
+    status === 'connected' && !paired ? 'waiting' : status;
+  const state = statusConfig[effectiveStatus];
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -141,8 +144,10 @@ export function ScannerApp() {
               <div className="rounded-3xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-300">
                 <p className="font-medium text-white">Connection status</p>
                 <p className="mt-2">
-                  {status === 'connected'
-                    ? 'Laptop is online and ready to receive scans.'
+                  {status === 'connected' && paired
+                    ? 'Phone is paired. Laptop is ready to receive scans.'
+                    : status === 'connected'
+                      ? 'Server connected. Waiting for phone to pair with this session.'
                     : status === 'connecting'
                       ? 'Waiting for the Socket.IO server...'
                       : status === 'error'

@@ -1,6 +1,6 @@
 type ScanActionsProps = {
   onCapture: () => void;
-  onRetake: () => void;
+  onDeleteLast: () => void;
   onSend: () => void;
   captureDisabled?: boolean;
   retakeDisabled?: boolean;
@@ -11,7 +11,7 @@ type ScanActionsProps = {
 
 export function ScanActions({
   onCapture,
-  onRetake,
+  onDeleteLast,
   onSend,
   captureDisabled = false,
   retakeDisabled = false,
@@ -24,8 +24,8 @@ export function ScanActions({
       <button className="action-button action-button-capture" onClick={onCapture} disabled={captureDisabled || sending}>
         {sending ? 'Working…' : 'Capture'}
       </button>
-      <button className="action-button action-button-secondary" onClick={onRetake} disabled={!hasCapture || retakeDisabled || sending}>
-        Retake last
+      <button className="action-button action-button-secondary" onClick={onDeleteLast} disabled={!hasCapture || retakeDisabled || sending}>
+        Delete last
       </button>
       <button className="action-button action-button-accent" onClick={onSend} disabled={!hasCapture || sendDisabled || sending}>
         {sending ? 'Sending…' : 'Send pages'}
