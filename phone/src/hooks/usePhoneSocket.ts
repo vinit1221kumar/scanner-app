@@ -29,6 +29,9 @@ type ScanImagePayload = {
   capturedAt: string;
 };
 
+const CONNECT_TIMEOUT_MS = 10000;
+const ACK_TIMEOUT_MS = 15000;
+
 export function usePhoneSocket(sessionId: string) {
   const [status, setStatus] = useState<PhoneConnectionStatus>('idle');
   const [paired, setPaired] = useState(false);
@@ -99,26 +102,84 @@ export function usePhoneSocket(sessionId: string) {
     };
   }, [sessionId, socket]);
 
-  const sendImage = (payload: Omit<ScanImagePayload, 'sessionId'>) => {
-    return new Promise<ScanAck>((resolve, reject) => {
-      if (!socket || socket.disconnected) {
-        reject(new Error('Socket is not connected.'));
+  const waitForConnection = () => {
+    return new Promise<void>((resolve, reject) => {
+      if (!socket) {
+        reject(new Error('Socket is unavailable.'));
         return;
       }
 
-      socket.emit(
-        'scan-image',
-        { ...payload, sessionId },
-        (ack: ScanAck) => {
-          if (ack?.ok) {
-            setLastSentAt(payload.capturedAt);
-            resolve(ack);
-            return;
-          }
+      if (socket.connected) {
+        resolve();
+        return;
+      }
 
-          reject(new Error(ack?.message || 'Failed to send scan.'));
-        },
-      );
+      const timeoutId = window.setTimeout(() => {
+        socket.off('connect', handleConnectOnce);
+        socket.off('connect_error', handleConnectErrorOnce);
+        reject(new Error('Reconnect timed out. Please try again.'));
+      }, CONNECT_TIMEOUT_MS);
+
+      const handleConnectOnce = () => {
+        window.clearTimeout(timeoutId);
+        socket.off('connect_error', handleConnectErrorOnce);
+        resolve();
+      };
+
+      const handleConnectErrorOnce = (connectError: Error) => {
+        window.clearTimeout(timeoutId);
+        socket.off('connect', handleConnectOnce);
+        reject(new Error(`Reconnect failed: ${connectError.message}`));
+      };
+
+      socket.once('connect', handleConnectOnce);
+      socket.once('connect_error', handleConnectErrorOnce);
+      socket.connect();
+    });
+  };
+
+  const sendImage = (payload: Omit<ScanImagePayload, 'sessionId'>) => {
+    return new Promise<ScanAck>(async (resolve, reject) => {
+      try {
+        if (!socket) {
+          throw new Error('Socket is unavailable.');
+        }
+
+        if (socket.disconnected) {
+          setStatus('connecting');
+          await waitForConnection();
+        }
+
+        let didAck = false;
+        const ackTimeoutId = window.setTimeout(() => {
+          if (!didAck) {
+            reject(new Error('Send timed out. Please try again.'));
+          }
+        }, ACK_TIMEOUT_MS);
+
+        socket.emit(
+          'scan-image',
+          { ...payload, sessionId },
+          (ack: ScanAck) => {
+            if (didAck) {
+              return;
+            }
+
+            didAck = true;
+            window.clearTimeout(ackTimeoutId);
+
+            if (ack?.ok) {
+              setLastSentAt(payload.capturedAt);
+              resolve(ack);
+              return;
+            }
+
+            reject(new Error(ack?.message || 'Failed to send scan.'));
+          },
+        );
+      } catch (sendError) {
+        reject(sendError instanceof Error ? sendError : new Error('Failed to send scan.'));
+      }
     });
   };
 

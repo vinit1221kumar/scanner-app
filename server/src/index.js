@@ -24,6 +24,9 @@ const io = new Server(httpServer, {
     origin: CORS_ORIGIN,
     credentials: CORS_CREDENTIALS,
   },
+  maxHttpBufferSize: 10 * 1024 * 1024,
+  pingInterval: 25000,
+  pingTimeout: 60000,
 });
 
 setupSocketServer(io);
