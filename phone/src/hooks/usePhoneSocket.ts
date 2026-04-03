@@ -1,0 +1,133 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { io, type Socket } from 'socket.io-client';
+import { SERVER_URL } from '@/lib/config';
+
+export type PhoneConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
+
+type JoinedPayload = {
+  role: 'phone';
+  sessionId: string;
+  paired: boolean;
+};
+
+type SessionUpdatePayload = {
+  sessionId: string;
+  paired: boolean;
+};
+
+type ScanAck = {
+  ok: boolean;
+  message?: string;
+};
+
+type ScanImagePayload = {
+  sessionId: string;
+  image: string;
+  fileName: string;
+  capturedAt: string;
+};
+
+export function usePhoneSocket(sessionId: string) {
+  const [status, setStatus] = useState<PhoneConnectionStatus>('idle');
+  const [paired, setPaired] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastSentAt, setLastSentAt] = useState<string | null>(null);
+
+  const socket = useMemo<Socket | null>(() => {
+    if (!sessionId) {
+      return null;
+    }
+
+    return io(SERVER_URL, {
+      autoConnect: false,
+      transports: ['websocket'],
+    });
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    const handleConnect = () => {
+      setStatus('connected');
+      setError(null);
+      socket.emit('join-phone', { sessionId });
+    };
+
+    const handleDisconnect = () => {
+      setStatus('disconnected');
+      setPaired(false);
+      setError('Socket disconnected. Check server connection and keep this page open.');
+    };
+
+    const handleConnectError = (connectError: Error) => {
+      setStatus('error');
+      setError(`Unable to connect to server. ${connectError.message}`);
+    };
+
+    const handleJoined = (payload: JoinedPayload) => {
+      if (payload.sessionId === sessionId) {
+        setPaired(payload.paired);
+      }
+    };
+
+    const handleSessionUpdate = (payload: SessionUpdatePayload) => {
+      if (payload.sessionId === sessionId) {
+        setPaired(payload.paired);
+      }
+    };
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('connect_error', handleConnectError);
+    socket.on('joined', handleJoined);
+    socket.on('session-update', handleSessionUpdate);
+
+    setStatus('connecting');
+    socket.connect();
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('connect_error', handleConnectError);
+      socket.off('joined', handleJoined);
+      socket.off('session-update', handleSessionUpdate);
+      socket.disconnect();
+    };
+  }, [sessionId, socket]);
+
+  const sendImage = (payload: Omit<ScanImagePayload, 'sessionId'>) => {
+    return new Promise<ScanAck>((resolve, reject) => {
+      if (!socket || socket.disconnected) {
+        reject(new Error('Socket is not connected.'));
+        return;
+      }
+
+      socket.emit(
+        'scan-image',
+        { ...payload, sessionId },
+        (ack: ScanAck) => {
+          if (ack?.ok) {
+            setLastSentAt(payload.capturedAt);
+            resolve(ack);
+            return;
+          }
+
+          reject(new Error(ack?.message || 'Failed to send scan.'));
+        },
+      );
+    });
+  };
+
+  return {
+    error,
+    lastSentAt,
+    paired,
+    sendImage,
+    socket,
+    status,
+  };
+}
