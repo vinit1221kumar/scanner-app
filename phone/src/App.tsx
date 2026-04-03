@@ -32,7 +32,15 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const { sessionId, pages, setSessionId, addPage, removePage, clearPages } = useAppStore();
   const { error: cameraError, permissionDenied, startCamera, status: cameraStatus, videoRef } = useCamera();
-  const { error: socketError, lastSentAt, paired, sendImage, status: socketStatus } = usePhoneSocket(sessionId || '');
+  const {
+    disconnectSocket,
+    error: socketError,
+    lastSentAt,
+    paired,
+    reconnectSocket,
+    sendImage,
+    status: socketStatus,
+  } = usePhoneSocket(sessionId || '');
 
   useEffect(() => {
     const currentSessionId = getSessionIdFromUrl();
@@ -50,6 +58,7 @@ export default function App() {
   const cameraState = cameraStatusLabels[cameraStatus];
   const isCameraLoading = cameraStatus === 'starting';
   const isSocketDisconnected = socketStatus === 'disconnected' || socketStatus === 'error';
+  const canReconnect = socketStatus === 'disconnected' || socketStatus === 'error';
 
   const handleCapture = async () => {
     try {
@@ -145,6 +154,15 @@ export default function App() {
             <StatusPill label={socketState.label} tone={socketState.tone} />
             <StatusPill label={cameraState.label} tone={cameraState.tone} />
             <StatusPill label={paired ? 'Paired' : 'Waiting for laptop'} tone={paired ? 'success' : 'warning'} />
+            {canReconnect ? (
+              <button className="connection-button" onClick={reconnectSocket}>
+                Reconnect
+              </button>
+            ) : (
+              <button className="connection-button connection-button-danger" onClick={disconnectSocket}>
+                Disconnect
+              </button>
+            )}
           </div>
         </header>
 

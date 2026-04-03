@@ -24,9 +24,17 @@ export function ScannerApp() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
   const phoneUrl = useMemo(() => createPhoneScanUrl(sessionId), [sessionId]);
-  const { error, images, paired, status } = useScannerSocket(sessionId);
+  const {
+    disconnectSocket,
+    error,
+    images,
+    paired,
+    reconnectSocket,
+    status,
+  } = useScannerSocket(sessionId);
   const showConnectionWarning = status === 'disconnected' || status === 'error';
   const showConnecting = status === 'connecting';
+  const canReconnect = status === 'disconnected' || status === 'error';
 
   useEffect(() => {
     let active = true;
@@ -75,6 +83,21 @@ export function ScannerApp() {
             <div className="flex flex-wrap gap-3">
               <StatusBadge label={state.label} tone={state.tone} />
               <StatusBadge label={paired ? 'Paired' : 'Waiting for phone'} tone={paired ? 'success' : 'warning'} />
+              {canReconnect ? (
+                <button
+                  className="inline-flex items-center rounded-full border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20"
+                  onClick={reconnectSocket}
+                >
+                  Reconnect
+                </button>
+              ) : (
+                <button
+                  className="inline-flex items-center rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20"
+                  onClick={disconnectSocket}
+                >
+                  Disconnect
+                </button>
+              )}
             </div>
           </div>
         </header>

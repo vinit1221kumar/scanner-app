@@ -86,6 +86,28 @@ select {
   gap: 8px;
 }
 
+.connection-button {
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.12);
+  color: #bae6fd;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.connection-button:active {
+  transform: translateY(1px);
+}
+
+.connection-button-danger {
+  border-color: rgba(244, 63, 94, 0.35);
+  background: rgba(244, 63, 94, 0.12);
+  color: #fecdd3;
+}
+
 .phone-grid {
   display: grid;
   gap: 16px;
@@ -136,7 +158,7 @@ select {
   border-radius: 20px;
   background: #020617;
   border: 1px solid rgba(148, 163, 184, 0.16);
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 5 / 8;
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -158,8 +180,8 @@ select {
 }
 
 .camera-guide {
-  width: min(75%, 340px);
-  height: min(68%, 430px);
+  width: min(84%, 420px);
+  height: min(84%, 560px);
   border: 2px solid rgba(56, 189, 248, 0.72);
   border-radius: 24px;
   box-shadow: 0 0 0 999px rgba(2, 6, 23, 0.14) inset;
@@ -301,6 +323,22 @@ select {
 
 .text-button-danger {
   color: #fda4af;
+}
+
+.text-button-success {
+  color: #86efac;
+}
+
+.page-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .page-list {

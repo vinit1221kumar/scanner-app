@@ -122,10 +122,33 @@ export function usePhoneSocket(sessionId: string) {
     });
   };
 
+  const disconnectSocket = () => {
+    if (!socket) {
+      return;
+    }
+
+    socket.disconnect();
+    setStatus('disconnected');
+    setPaired(false);
+    setError('Disconnected manually. Tap Reconnect when ready.');
+  };
+
+  const reconnectSocket = () => {
+    if (!socket) {
+      return;
+    }
+
+    setStatus('connecting');
+    setError(null);
+    socket.connect();
+  };
+
   return {
+    disconnectSocket,
     error,
     lastSentAt,
     paired,
+    reconnectSocket,
     sendImage,
     socket,
     status,

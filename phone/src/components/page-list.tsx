@@ -5,6 +5,8 @@ type CapturedPage = {
   capturedAt: string;
 };
 
+import { downloadDataUrl } from '@/lib/download';
+
 type PageListProps = {
   pages: CapturedPage[];
   onRemove: (pageId: string) => void;
@@ -12,6 +14,17 @@ type PageListProps = {
 };
 
 export function PageList({ pages, onRemove, onClear }: PageListProps) {
+  const handleDownloadAll = () => {
+    pages
+      .slice()
+      .reverse()
+      .forEach((page, index) => {
+        window.setTimeout(() => {
+          downloadDataUrl(page.dataUrl, page.fileName || `scan-page-${index + 1}.jpg`);
+        }, index * 150);
+      });
+  };
+
   if (pages.length === 0) {
     return (
       <div className="page-list-empty">
@@ -25,9 +38,14 @@ export function PageList({ pages, onRemove, onClear }: PageListProps) {
     <div className="page-list-shell">
       <div className="page-list-header">
         <p className="page-list-title">Captured pages</p>
-        <button className="text-button" onClick={onClear}>
-          Clear all
-        </button>
+        <div className="page-list-actions">
+          <button className="text-button text-button-success" onClick={handleDownloadAll}>
+            Download all
+          </button>
+          <button className="text-button" onClick={onClear}>
+            Clear all
+          </button>
+        </div>
       </div>
 
       <div className="page-list">
@@ -38,9 +56,17 @@ export function PageList({ pages, onRemove, onClear }: PageListProps) {
                 <p className="page-card-label">Page {index + 1}</p>
                 <p className="page-card-filename">{page.fileName}</p>
               </div>
-              <button className="text-button text-button-danger" onClick={() => onRemove(page.id)}>
-                Retake
-              </button>
+              <div className="page-card-actions">
+                <button
+                  className="text-button text-button-success"
+                  onClick={() => downloadDataUrl(page.dataUrl, page.fileName || `scan-page-${index + 1}.jpg`)}
+                >
+                  Download
+                </button>
+                <button className="text-button text-button-danger" onClick={() => onRemove(page.id)}>
+                  Retake
+                </button>
+              </div>
             </div>
 
             {/* eslint-disable-next-line @next/next/no-img-element */}

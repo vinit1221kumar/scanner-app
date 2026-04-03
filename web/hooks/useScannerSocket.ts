@@ -108,10 +108,33 @@ export function useScannerSocket(sessionId: string) {
     };
   }, [sessionId, socket]);
 
+  const disconnectSocket = () => {
+    if (!socket) {
+      return;
+    }
+
+    socket.disconnect();
+    setStatus('disconnected');
+    setPaired(false);
+    setError('Disconnected manually. Click Reconnect when ready.');
+  };
+
+  const reconnectSocket = () => {
+    if (!socket) {
+      return;
+    }
+
+    setStatus('connecting');
+    setError(null);
+    socket.connect();
+  };
+
   return {
+    disconnectSocket,
     error,
     images,
     paired,
+    reconnectSocket,
     socket,
     status,
   };
